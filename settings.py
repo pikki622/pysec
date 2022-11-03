@@ -1,5 +1,6 @@
-# Django settings for pysec project.
 import os
+
+DATA_DIR = "C:/Users/npiku/OneDrive/_code/_pysec"
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,8 +15,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '',                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME':   '"sqlite:///sec_filings.db"',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -154,7 +155,3 @@ LOGGING = {
     }
 }
 
-try:
-    from local_settings import *
-except ImportError, exp:
-    pass
