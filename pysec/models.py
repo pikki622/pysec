@@ -19,30 +19,28 @@ class Index(models.Model):
     def xbrl_link(self):
         if self.form.startswith('10-K') or self.form.startswith('10-Q'):
             id = self.filename.split('/')[-1][:-4]
-            return 'http://www.sec.gov/Archives/edgar/data/%s/%s/%s-xbrl.zip' % (self.cik, id.replace('-',''), id)
+            return f"http://www.sec.gov/Archives/edgar/data/{self.cik}/{id.replace('-', '')}/{id}-xbrl.zip"
         return None
         
     def html_link(self):
-        return 'http://www.sec.gov/Archives/%s' % self.filename
+        return f'http://www.sec.gov/Archives/{self.filename}'
 
     def index_link(self):
         id = self.filename.split('/')[-1][:-4]
-        return 'http://www.sec.gov/Archives/edgar/data/%s/%s/%s-index.htm' % (self.cik, id.replace('-',''), id)
+        return f"http://www.sec.gov/Archives/edgar/data/{self.cik}/{id.replace('-', '')}/{id}-index.htm"
         
     def txt(self):
         return self.filename.split('/')[-1]
         
     def localfile(self):
-        filename = '%s/%s/%s/%s' % (DATA_DIR, self.cik,self.txt()[:-4],self.txt())
-        if os.path.exists(filename):
-            return filename
-        return None
+        filename = f'{DATA_DIR}/{self.cik}/{self.txt()[:-4]}/{self.txt()}'
+        return filename if os.path.exists(filename) else None
         
     def localpath(self):
-        return '%s/%s/%s/' % (DATA_DIR, self.cik,self.txt()[:-4])
+        return f'{DATA_DIR}/{self.cik}/{self.txt()[:-4]}/'
 
     def localcik(self):
-        return '%s/%s/' % (DATA_DIR, self.cik)
+        return f'{DATA_DIR}/{self.cik}/'
     
 
 
@@ -70,11 +68,12 @@ class Index(models.Model):
         os.chdir(self.localpath())
 
         if not os.path.exists(self.html_link().split('/')[-1]):
-            os.system('wget %s' % self.html_link())     
-        if self.xbrl_link():
-            if not os.path.exists(self.xbrl_link().split('/')[-1]):
-                os.system('wget %s' % self.xbrl_link())
-                os.system('unzip *.zip')
+            os.system(f'wget {self.html_link()}')
+        if self.xbrl_link() and not os.path.exists(
+            self.xbrl_link().split('/')[-1]
+        ):
+            os.system(f'wget {self.xbrl_link()}')
+            os.system('unzip *.zip')
 
     def xbrl_localpath(self):
         try:
@@ -83,9 +82,7 @@ class Index(models.Model):
             self.download()
         files = os.listdir('.')
         xml = sorted([elem for elem in files if elem.endswith('.xml')],key=len)
-        if not len(xml):
-            return None
-        return self.localpath() + xml[0]
+        return self.localpath() + xml[0] if len(xml) else None
 
 
     def xbrl(self):
@@ -104,7 +101,4 @@ class Index(models.Model):
         return x
         
     def ticker(self): #get a company's stock ticker from an XML filing
-        filepath = self.xbrl_localpath()                        
-        if filepath:
-            return filepath.split('-')[0]
-        return None
+        return filepath.split('-')[0] if (filepath := self.xbrl_localpath()) else None

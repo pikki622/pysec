@@ -26,4 +26,4 @@ WSGI_APPLICATION = 'wsgi.application'
 ############### PYSEC specific variables
 
 # assumes this directory exists
-DATA_DIR = "%s/pysec/data/" % PROJECT_ROOT
+DATA_DIR = f"{PROJECT_ROOT}/pysec/data/"
