@@ -12,10 +12,9 @@ def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
 # Gets the list of filings and download locations for the given year and quarter
 def get_filing_list(year,qtr):
     url='ftp://ftp.sec.gov/edgar/full-index/%d/QTR%d/company.zip' % (year,qtr)
-    quarter = "%s%s" % (year,qtr)
+    quarter = f"{year}{qtr}"
 
-    print url
-
+    url='ftp://ftp.sec.gov/edgar/full-index/%d/QTR%d/company.zip' % (year,qtr)
     # Download the data and save to a file
     fn='%s/company_%d_%d.zip' % (DATA_DIR, year,qtr)
 
@@ -24,24 +23,26 @@ def get_filing_list(year,qtr):
         fileout=file(fn,'w')
         fileout.write(compressed_data)
         fileout.close()
-    
+
     # Extract the compressed file
     zip=ZipFile(fn)
     zdata=zip.read('company.idx')
     zdata = removeNonAscii(zdata)
-    
+
     # Parse the fixed-length fields
     result=[]
     for r in zdata.split('\n')[10:]:
         date = r[86:98].strip()
         if date=='': date = None
         if r.strip()=='': continue
-        filing={'name':r[0:62].strip(),
-                'form':r[62:74].strip(),
-                'cik':r[74:86].strip(),
-                'date':date,
-                'quarter': quarter,
-                'filename':r[98:].strip()}
+        filing = {
+            'name': r[:62].strip(),
+            'form': r[62:74].strip(),
+            'cik': r[74:86].strip(),
+            'date': date,
+            'quarter': quarter,
+            'filename': r[98:].strip(),
+        }
 
         result.append(Index(**filing))
 

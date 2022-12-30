@@ -36,34 +36,31 @@ class XBRL:
             return False
             
     def getNodeList(self,xpath,root=None):
-        if not root is not None: root = self.oInstance
-        oNodelist = root.xpath(xpath,namespaces=self.ns)
-        return oNodelist
+        if root is None: root = self.oInstance
+        return root.xpath(xpath,namespaces=self.ns)
         
     def getNode(self,xpath,root=None):
         oNodelist = self.getNodeList(xpath,root)
-        if len(oNodelist):
-            return oNodelist[0]
-        return None
+        return oNodelist[0] if len(oNodelist) else None
 
     def GetFactValue(self,SeekConcept, ConceptPeriodType):
                 
         factValue = None
-            
-        if ConceptPeriodType == "Instant":
-            ContextReference = self.fields['ContextForInstants']
-        elif ConceptPeriodType == "Duration":
+
+        if ConceptPeriodType == "Duration":
             ContextReference = self.fields['ContextForDurations']
+        elif ConceptPeriodType == "Instant":
+            ContextReference = self.fields['ContextForInstants']
         else:
             #An error occured
             return "CONTEXT ERROR"
-        
+
         if not ContextReference:
             return None
 
 
-        oNode = self.getNode("//" + SeekConcept + "[@contextRef='" + ContextReference + "']")
-        if oNode is not None:                    
+        oNode = self.getNode(f"//{SeekConcept}[@contextRef='{ContextReference}']")
+        if oNode is not None:                
             factValue = oNode.text
             if 'nil' in oNode.keys() and oNode.get('nil')=='true':
                 factValue=0
@@ -72,10 +69,9 @@ class XBRL:
             try:
                 factValue = float(factValue)
             except:
-                print 'couldnt convert %s=%s to string' % (SeekConcept,factValue)
+                factValue = float(factValue)
+                except:
                 factValue = None
-                pass
-            
         return factValue   
                     
         
@@ -91,7 +87,7 @@ class XBRL:
             self.fields['EntityRegistrantName'] = "Registered name not found"
 
         #Fiscal year
-        oNode = self.getNode("//dei:CurrentFiscalYearEndDate[@contextRef]")        
+        oNode = self.getNode("//dei:CurrentFiscalYearEndDate[@contextRef]")
         if oNode is not None:
             self.fields['FiscalYear'] = oNode.text
         else:
@@ -113,11 +109,7 @@ class XBRL:
 
         #TradingSymbol
         oNode = self.getNode("//dei:TradingSymbol[@contextRef]")
-        if oNode is not None:
-            self.fields['TradingSymbol'] = oNode.text
-        else:
-            self.fields['TradingSymbol'] = "Not provided"
-
+        self.fields['TradingSymbol'] = "Not provided" if oNode is None else oNode.text
         #DocumentFiscalYearFocus
         oNode = self.getNode("//dei:DocumentFiscalYearFocus[@contextRef]")
         if oNode is not None:
@@ -131,7 +123,7 @@ class XBRL:
             self.fields['DocumentFiscalPeriodFocus'] = oNode.text
         else:
             self.fields['DocumentFiscalPeriodFocus'] = "Fiscal period focus not found"
-        
+
         #DocumentType
         oNode = self.getNode("//dei:DocumentType[@contextRef]")
         if oNode is not None:
@@ -306,18 +298,17 @@ class XBRL:
     def LookForAlternativeInstanceContext(self):
         #This deals with the situation where no instance context has no dimensions
         #Finds something
-            
+
         something = None
-        
+
         #See if there are any nodes with the document period focus date
         oNodeList_Alt = self.getNodeList("//xbrli:context[xbrli:period/xbrli:instant='" + self.fields['BalanceSheetDate'] + "']")
 
         #MsgBox "Node list length: " + oNodeList_Alt.length
         for oNode_Alt in oNodeList_Alt:
-            #Found possible contexts
-            #MsgBox oNode_Alt.selectSingleNode("@id").text
-            something = self.getNode("//us-gaap:Assets[@contextRef='" + oNode_Alt.get("id") + "']")
-            if something:
+            if something := self.getNode(
+                "//us-gaap:Assets[@contextRef='" + oNode_Alt.get("id") + "']"
+            ):
                 #MsgBox "Use this context: " + oNode_Alt.selectSingleNode("@id").text
                 return oNode_Alt.get("id")
                
